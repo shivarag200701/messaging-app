@@ -58,9 +58,9 @@ This app allows users to:
 - [x] Hash passwords using bcrypt  
 - [x] Generate JWT on login  
 - [x] Middleware to verify JWT on protected routes  
-- [ ] Create login and registration pages (React)  
-- [ ] Save token in `localStorage`  
-- [ ] Redirect to chat on successful login
+- [x] Create login and registration pages (React)  
+- [x] Save token in `localStorage`  
+- [x] Redirect to chat on successful login
 
 ---
 
