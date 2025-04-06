@@ -34,8 +34,8 @@ This app allows users to:
 - [x] Learn HTML, CSS, and JavaScript basics  
 - [x] Learn Git & GitHub  
 - [x] Learn basic terminal commands  
-- [ ] Understand what frontend/backend means  
-- [ ] Choose tech stack (React, Node.js, MongoDB, Socket.IO)
+- [x] Understand what frontend/backend means  
+- [x] Choose tech stack (React, Node.js, MongoDB, Socket.IO)
 
 ---
 
