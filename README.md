@@ -40,24 +40,24 @@ This app allows users to:
 ---
 
 ### 🔵 Phase 1: Project Setup  
-- [ ] Install Node.js and npm  
-- [ ] Install VS Code and Git  
-- [ ] Initialize backend project (`npm init`)  
-- [ ] Set up Express server  
-- [ ] Connect to MongoDB using Mongoose  
-- [ ] Test basic REST API (e.g., `/ping`)  
-- [ ] Initialize frontend with `create-react-app`  
-- [ ] Create folders: `/client`, `/server`
+- [x] Install Node.js and npm  
+- [x] Install VS Code and Git  
+- [x] Initialize backend project (`npm init`)  
+- [x] Set up Express server  
+- [x] Connect to MongoDB using Mongoose  
+- [x] Test basic REST API (e.g., `/ping`)  
+- [x] Initialize frontend with `create-react-app`  
+- [x] Create folders: `/client`, `/server`
 
 ---
 
 ### 🟡 Phase 2: User Authentication  
-- [ ] Create User model in MongoDB  
-- [ ] Create `POST /register` API  
-- [ ] Create `POST /login` API  
-- [ ] Hash passwords using bcrypt  
-- [ ] Generate JWT on login  
-- [ ] Middleware to verify JWT on protected routes  
+- [x] Create User model in MongoDB  
+- [x] Create `POST /register` API  
+- [x] Create `POST /login` API  
+- [x] Hash passwords using bcrypt  
+- [x] Generate JWT on login  
+- [x] Middleware to verify JWT on protected routes  
 - [ ] Create login and registration pages (React)  
 - [ ] Save token in `localStorage`  
 - [ ] Redirect to chat on successful login
