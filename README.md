@@ -31,9 +31,9 @@ This app allows users to:
 ## ✅ Project Checklist
 
 ### 🟢 Phase 0: Prerequisites  
-- [ ] Learn HTML, CSS, and JavaScript basics  
-- [ ] Learn Git & GitHub  
-- [ ] Learn basic terminal commands  
+- [x] Learn HTML, CSS, and JavaScript basics  
+- [x] Learn Git & GitHub  
+- [x] Learn basic terminal commands  
 - [ ] Understand what frontend/backend means  
 - [ ] Choose tech stack (React, Node.js, MongoDB, Socket.IO)
 
