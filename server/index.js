@@ -18,6 +18,7 @@ app.use(express.json());
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -31,6 +32,7 @@ const io = new Server(http, {
   }
 });
 
+
 io.on("connection", (socket) => {
   console.log("🟢 New socket connected:", socket.id);
 
@@ -38,6 +40,9 @@ io.on("connection", (socket) => {
   socket.on("join", (username) => {
     users[username] = socket.id;
     console.log(`${username} joined with socket ID: ${socket.id}`);
+    // ✅ Broadcast online users to everyone
+    console.log("📤 Emitting online users:", Object.keys(users));
+    io.emit("online_users", Object.keys(users));
   });
 
   // 💬 Handle 1-to-1 message sending
@@ -46,7 +51,11 @@ io.on("connection", (socket) => {
 
     // Save to MongoDB
     try {
-      const message = new Message({ sender, receiver, content });
+      const message = new Message({
+         sender, 
+         receiver, 
+         content,
+         status: "sent"  });
       await message.save();
     } catch (err) {
       console.error("❌ Failed to save message:", err);
@@ -62,17 +71,80 @@ io.on("connection", (socket) => {
     socket.emit("receive_message", data);
   });
 
+  socket.on("typing", ({ from, to }) => {
+    const receiverSocketId = users[to];
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("user_typing", { from });
+    }
+  });
+  
+  socket.on("stop_typing", ({ from, to }) => {
+    const receiverSocketId = users[to];
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("user_stop_typing", { from });
+    }
+  });
+
+  //to update message to delivered
+  socket.on("message_delivered", async ({ messageId }) => {
+    try {
+      await Message.findByIdAndUpdate(messageId, { status: "delivered" });
+
+      const message = await Message.findById(messageId); // fetch full message
+    const sender = message.sender;
+    const senderSocketId = users[sender];
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("message_status_updated", {
+        messageId,
+        status: "delivered"
+      });
+    }
+    } catch (err) {
+      console.error("❌ Failed to mark message as delivered:", err);
+    }
+  });
+
+  //mark seen when chat window open
+  socket.on("mark_seen", async ({ from, to }) => {
+    try {
+      await Message.updateMany(
+        { sender: to, receiver: from, status: { $ne: "seen" } },
+        { status: "seen" }
+      );
+  
+      // OPTIONAL: Let the sender know their messages were seen
+      const senderSocketId = users[to];
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messages_seen", {
+          seenBy: from,
+        });
+      }
+  
+    } catch (err) {
+      console.error("❌ Failed to mark messages as seen:", err);
+    }
+  });
+  
+
   // 🔴 Handle user disconnect
   socket.on("disconnect", () => {
     for (let username in users) {
       if (users[username] === socket.id) {
         delete users[username];
         console.log(`🔴 ${username} disconnected`);
+
+        // ✅ Broadcast updated list again
+        io.emit("online_users", Object.keys(users));
         break;
       }
     }
   });
 });
+
+
+
+
 
 // ⬇️ Start the HTTP server (not app.listen)
 http.listen(PORT, () => {

@@ -90,7 +90,7 @@ Custom `ProtectedRoute` component checks for token
 If not found, redirects to `/login`
 
 ### ✔️ Logout Feature
-Clears `localStorage`, redirects to login
+Clears `localStorage`, disconnects socket, redirects to login
 
 ---
 
@@ -108,6 +108,7 @@ send_message  →     socket.on('send') →    io.to(B).emit('receive')
 
 - Socket.IO set up on both frontend and backend
 - `send_message` triggers `receive_message`
+- Users mapped with socket IDs
 
 ---
 
@@ -120,6 +121,7 @@ send_message  →     socket.on('send') →    io.to(B).emit('receive')
   sender: String,
   receiver: String,
   content: String,
+  status: String, // sent | delivered | seen
   createdAt: Date
 }
 ```
@@ -168,75 +170,112 @@ axios.get(`/api/messages/${username}/${toUser}`)
 
 ---
 
-## 🟤 UI Features
+## 🟠 Phase 6: Read Receipts + Delivery Ticks
 
-- Styled chat bubbles (left/right)
-- Auto-scroll to latest message
-- Input + send button
+### ✔️ Message Status Updates
+- sent: default
+- delivered: when message received
+- seen: when chat is opened
+
+### ✔️ Backend Events
+- `message_delivered`
+- `mark_seen`
+- Emits `message_status_updated` and `messages_seen`
+
+### ✔️ Frontend Logic
+```js
+if (msg.sender === currentUser) {
+  show ✓ | ✓✓ | ✓✓ blue
+}
+```
+
+---
+
+## 🟢 Phase 7: Online Status Indicator
+
+### ✔️ On Join / Disconnect
+- Backend keeps `users = { username: socket.id }`
+- On `join`, add to list + emit `online_users`
+- On `disconnect`, remove + re-emit
+
+### ✔️ Frontend
+- Shows 🟢 dot using `onlineUsers.includes(user.username)`
+
+---
+
+## 🔵 Typing Indicator
+
+### ✔️ Typing Flow
+- Emit `typing` on input change
+- Emit `stop_typing` after 1s inactivity
+- Receiver sees `isTyping` from `user_typing`
+
+---
+
+## 🔁 Socket Lifecycle Handling
+
+### ✔️ Socket Initialization
+```js
+const socket = io("http://localhost:5000", { autoConnect: false });
+```
+
+### ✔️ On Login:
+```js
+socket.connect();
+socket.emit("join", username);
+```
+
+### ✔️ On Logout:
+```js
+socket.disconnect();
+localStorage.clear();
+navigate("/");
+```
+
+---
+
+## 🛠️ UI Features
+
+- Chat bubbles (left/right)
+- Auto-scroll to bottom
+- Green dot for online users
+- Blue ticks for read
+- Typing indicator
+- Receiver switching
 - Logout button
-- Receiver input box for testing
+
+---
+
+## ✅ .env File (Backend)
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=your_jwt_secret
+```
 
 ---
 
 ## 🛑 Current Pause Point
 
-✅ Fully working 1-to-1 real-time chat  
-✅ Messages stored in MongoDB  
-✅ Auth flow complete  
-✅ Chat UI working with live updates  
-🛑 Stopped here to resume later
+✅ Fully working:
+- Login/Register + JWT Auth
+- 1-to-1 real-time messaging
+- MongoDB message storage
+- Delivery + Read Receipts
+- Online status + Typing indicator
+
+🛑 Stop Point:
+- User list is clickable but not persistent
+- Not yet deployed
 
 ---
 
-## 🔜 When Resuming
+## 🔜 Next Features (After Resume)
 
-Next features to build:
-- User list to select chat (replace manual receiver input)
-- Show timestamps
-- Online/offline indicators
-- Deploy to Render + Vercel
-
----
-
-## 💡 Extras
-
-### 📦 How Axios Works
-
-Axios helps React talk to backend like:
-
-```js
-axios.post("/api/auth/login", {
-  username,
-  password
-});
-```
-
-Sends data, waits for backend response, and returns result to the frontend.
+- Persist user chat list
+- Add timestamps + dates
+- Deploy frontend (Vercel) + backend (Render)
+- Profile avatar support
+- Group chat support (advanced)
 
 ---
-
-### ✅ Helpful Commands
-
-```bash
-# Start backend
-cd server
-node index.js
-
-# Start frontend
-cd client
-npm start
-```
-
----
-
-### ✅ .env Files
-
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
-```
-
----
-
-✅ You’re ready to resume development from here at any time.
