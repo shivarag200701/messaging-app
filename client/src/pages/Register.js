@@ -1,5 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
+const API = process.env.REACT_APP_BACKEND_URL;
+
 
 function Register() {
   const [username, setUsername] = useState("");
@@ -8,7 +10,7 @@ function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", {
+      const res = await axios.post(`${API}/api/auth/register`, {
         username,
         password,
       });

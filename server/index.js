@@ -5,12 +5,14 @@ const connectDB = require("./config/db");
 const Message = require("./models/Message");
 
 
+
 dotenv.config();
 const app = express();
 const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const users = {}; // username → socket.id
 const PORT = process.env.PORT || 5000;
+const allowedOrigin = process.env.CLIENT_URL;
 connectDB();
 
 app.use(cors());
@@ -27,7 +29,7 @@ app.get("/", (req, res) => {
 // ⬇️ Setup Socket.IO
 const io = new Server(http, {
   cors: {
-    origin: "http://localhost:3000", // Allow frontend
+    origin: allowedOrigin, // Allow frontend
     methods: ["GET", "POST"]
   }
 });

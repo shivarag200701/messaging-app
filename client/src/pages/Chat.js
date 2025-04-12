@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+const API = process.env.REACT_APP_BACKEND_URL;
 
 
-const socket = io("http://localhost:5000", { autoConnect: false });
+const socket = io(API, { autoConnect: false });
 
 function Chat() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ function Chat() {
       if (!username || !toUser) return;
   
       try {
-        const res = await axios.get(`http://localhost:5000/api/messages/${username}/${toUser}`);
+        const res = await axios.get(`${API}/api/messages/${username}/${toUser}`);
         setMessages(res.data);
       } catch (err) {
         console.error("Failed to fetch messages between users");
@@ -107,7 +108,7 @@ function Chat() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/users");
+        const res = await axios.get(`${API}/api/users`);
         const filtered = res.data.filter(u => u.username !== username); // remove self
         setUsers(filtered);
       } catch (err) {
