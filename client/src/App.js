@@ -1,16 +1,20 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Auth from "./pages/Auth";      // New slider UI
 import Chat from "./pages/Chat";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 function App() {
+  const isAuthenticated = !!localStorage.getItem("token");
+
   return (
+    
     <Router>
+      <Toaster position="top-center" reverseOrder={false} />
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
+        {/* Unified Login/Register page */}
+        <Route path="/" element={isAuthenticated ? <Navigate to="/chat" /> : <Auth />} />
+
         {/* Protected Chat Route */}
         <Route
           path="/chat"
