@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -12,6 +12,13 @@ function Auth() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/chat", { replace: true });
+    }
+  }, [navigate]);
+
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
@@ -24,6 +31,7 @@ function Auth() {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("username", res.data.user.username);
         navigate("/chat");
+        console.log("Token set:", res.data.token);
       } else {
         alert("Registration successful! You can now log in.");
         setIsLogin(true);
@@ -34,6 +42,7 @@ function Auth() {
       setError(err.response?.data?.message || err.message || "Something went wrong");
     }
   };
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-700">

@@ -20,6 +20,8 @@ function Chat() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+  const [smartReplies, setSmartReplies] = useState([]);
+  
 
   useEffect(() => {
     const theme = localStorage.getItem("theme");
@@ -43,7 +45,6 @@ function Chat() {
   };
 
   useEffect(() => {
-    const username = localStorage.getItem("username");
     if (username) {
       socket.connect();
       socket.emit("join", username);
@@ -84,6 +85,8 @@ function Chat() {
       const { sender, receiver } = data;
       if ((sender === username && receiver === toUser) || (sender === toUser && receiver === username)) {
         setMessages((prev) => [...prev, data]);
+
+    
       }
       socket.emit("message_delivered", { messageId: data._id });
       if (data.sender === toUser) {
@@ -151,6 +154,27 @@ function Chat() {
     };
   }, [username, toUser]);
 
+  const fetchSmartReplies = async () => {
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.sender === username) return;
+
+    try {
+      const res = await axios.post(`${API}/api/ai/suggest`, {
+        conversation: lastMsg.content,
+      });
+      setSmartReplies(res.data.suggestions || []);
+    } catch (err) {
+      console.error("AI Suggest Error:", err);
+    }
+  };
+
+ 
+
+  useEffect(() => {
+    scrollToBottom();
+    fetchSmartReplies();
+  }, [messages]);
+
   const sendMessage = () => {
     if (message.trim() !== "" && toUser.trim() !== "") {
       const newMsg = { sender: username, receiver: toUser, content: message };
@@ -208,10 +232,19 @@ function Chat() {
             key={i}
             onClick={() => setToUser(u.username)}
             className={`flex items-center justify-between px-4 py-2 rounded-lg cursor-pointer mb-2 ${
-              toUser === u.username ? "bg-blue-500 text-white" : "bg-white hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+              toUser === u.username
+                ? "bg-blue-500 text-white"
+                : "bg-white hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
             }`}
           >
-            <span>{u.username}</span>
+            <span className="flex items-center gap-2">
+              <img
+                src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${u.username}`}
+                alt="avatar"
+                className="w-6 h-6 rounded-full"
+              />
+              {u.username}
+            </span>
             {onlineUsers.includes(u.username) && (
               <span className="h-2 w-2 bg-green-500 rounded-full"></span>
             )}
@@ -236,6 +269,21 @@ function Chat() {
           </div>
         )}
 
+        {/* Smart Replies */}
+        {smartReplies.length > 0 && (
+          <div className="px-6 pt-2 pb-1 flex gap-2 flex-wrap">
+            {smartReplies.map((reply, index) => (
+              <button
+                key={index}
+                onClick={() => setMessage(reply)}
+                className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+              >
+                {reply}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2 bg-gray-50 dark:bg-gray-900">
           {messages.map((msg, i) => (
@@ -244,7 +292,7 @@ function Chat() {
               className={`flex ${msg.sender === username ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`px-4 py-2 rounded-lg max-w-xs break-words text-sm shadow-md ${
+                className={`group px-4 py-2 rounded-lg max-w-xs break-words text-sm shadow-md relative ${
                   msg.sender === username ? "bg-blue-100 dark:bg-blue-900 text-right" : "bg-white dark:bg-gray-700"
                 }`}
               >
@@ -257,11 +305,18 @@ function Chat() {
                     {msg.status === "seen" ? "✓✓ Seen" : msg.status === "delivered" ? "✓✓" : "✓"}
                   </div>
                 )}
+                {/* Hover Actions */}
+                <div className="absolute top-0 right-0 hidden group-hover:flex gap-2 bg-white dark:bg-gray-800 border p-1 rounded shadow text-xs">
+                  <button>💬</button>
+                  <button onClick={() => navigator.clipboard.writeText(msg.content)}>📋</button>
+                  <button>🗑️</button>
+                  <button>📌</button>
+                </div>
               </div>
             </div>
           ))}
 
-          {/* Typing indicator styled like message */}
+          {/* Typing indicator */}
           {isTyping && typingUser && (
             <div className={`flex ${lastMsg?.sender === username ? "justify-start" : "justify-end"}`}>
               <div
@@ -275,7 +330,6 @@ function Chat() {
               </div>
             </div>
           )}
-
           <div className="h-6" ref={messagesEndRef} />
         </div>
 
