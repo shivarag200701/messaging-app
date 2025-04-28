@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
+const dotenv = require("dotenv")
 const connectDB = require("./config/db");
 const Message = require("./models/Message");
+
+
 
 
 
@@ -13,6 +15,8 @@ const { Server } = require("socket.io");
 const users = {}; // username → socket.id
 const PORT = process.env.PORT || 5000;
 const allowedOrigin = process.env.CLIENT_URL;
+const paymentRoutes = require("./routes/paymentRoutes");
+
 connectDB();
 
 app.use(cors());
@@ -23,7 +27,7 @@ app.use("/api/messages", require("./routes/messageRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/ai", require("./routes/aiRoutes"));
 app.use("/api/mental-health", require("./routes/mentalHealthRoutes"));
-
+app.use("/api/payments", paymentRoutes);
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
@@ -59,7 +63,8 @@ io.on("connection", (socket) => {
          sender, 
          receiver, 
          content,
-         status: "sent"  });
+         status: "sent",
+         createdAt: data.createdAt || new Date(),  });
       await message.save();
     } catch (err) {
       console.error("❌ Failed to save message:", err);

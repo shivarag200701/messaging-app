@@ -1,7 +1,7 @@
 // server/routes/mentalHealthRoutes.js
 const express = require("express");
 const router = express.Router();
-const OpenAI = require("openai");
+const { OpenAI } = require("openai");
 require("dotenv").config();
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -19,21 +19,41 @@ router.post("/analyze", async (req, res) => {
       messages: [
         {
           role: "system",
-          content:
-            "You are an assistant that helps detect if a message is emotionally stressful, negative, or anxious. Reply with only one word: 'negative' or 'neutral'.",
+          content: `
+You are an assistant monitoring conversations for emotional well-being.
+Analyze the following conversation history.
+Determine if the overall tone is emotionally stressful, negative, heated, or neutral.
+Respond ONLY in this strict JSON format:
+
+{
+  "sentiment": "negative" or "neutral",
+  "confidence": percentage (0-100)
+}
+
+DO NOT add any extra words or explanation. Only valid JSON.`,
         },
         {
           role: "user",
           content: message,
         },
       ],
+      temperature: 0.3, // Less randomness
     });
 
-    const response = completion.choices[0].message.content.trim().toLowerCase();
-    return res.json({ sentiment: response });
+    const raw = completion.choices[0].message.content.trim();
+
+    let responseJSON;
+    try {
+      responseJSON = JSON.parse(raw);
+    } catch (parseError) {
+      console.error("Failed to parse OpenAI JSON response:", raw);
+      return res.status(500).json({ error: "Invalid AI response format" });
+    }
+
+    return res.json(responseJSON);
   } catch (err) {
     console.error("OpenAI error:", err.message);
-    res.status(500).json({ error: "Failed to analyze message" });
+    res.status(500).json({ error: "Failed to analyze conversation" });
   }
 });
 

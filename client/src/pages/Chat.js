@@ -3,11 +3,22 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import SendPaymentModal from "../components/SendPaymentModal";
+import PaymentPromptModal from "../components/PaymentPromptModal"
 const API = process.env.REACT_APP_BACKEND_URL;
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+
+
+
 
 const socket = io(API, { autoConnect: false });
 
+// console.log(process.env.REACT_APP_STRIPE_PUBLIC_KEY)
+
 function Chat() {
+  
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
   const [toUser, setToUser] = useState("");
@@ -21,8 +32,30 @@ function Chat() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
   const [smartReplies, setSmartReplies] = useState([]);
+  const [paymentClientSecret, setPaymentClientSecret] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
   
 
+  const stripeOptions = {
+    appearance: {
+      theme: isDarkMode ? "night" : "flat",  // Or 'night' for dark mode Stripe
+      variables: {
+        colorPrimary: "#3B82F6", // Tailwind blue-500
+        colorBackground: "#ffffff", // Light background
+        colorText: "#1f2937", // Tailwind gray-800
+        fontFamily: "Inter, sans-serif",
+        borderRadius: "8px",
+        spacingUnit: "6px",
+      },
+      rules: {
+        '.Label': {
+          color: '#6b7280', // Tailwind gray-500
+          fontSize: '14px',
+        },
+      },
+    },
+  };
   useEffect(() => {
     const theme = localStorage.getItem("theme");
     if (theme === "dark") {
@@ -85,13 +118,18 @@ function Chat() {
       const { sender, receiver } = data;
       if ((sender === username && receiver === toUser) || (sender === toUser && receiver === username)) {
         setMessages((prev) => [...prev, data]);
-
-    
       }
+      
       socket.emit("message_delivered", { messageId: data._id });
       if (data.sender === toUser) {
         socket.emit("mark_seen", { from: username, to: toUser });
       }
+
+      
+        // setTimeout(() => {
+        //   analyzeRecentConversation();
+        // }, 1000);
+      
     });
     return () => socket.off("receive_message");
   }, [username, toUser]);
@@ -168,6 +206,46 @@ function Chat() {
     }
   };
 
+  const analyzeRecentConversation = async () => {
+    const recentMessages = messages.slice(-2) // Last 6 messages instead of just 2
+      .map((msg) => `${msg.sender}: ${msg.content}`)
+      .join("\n");
+  
+    if (!recentMessages) return;
+  
+    try {
+      const res = await axios.post(`${API}/api/mental-health/analyze`, { message: recentMessages });
+  
+      if (res.data.sentiment === "negative" && res.data.confidence >= 70) {
+        toast(
+          (t) => (
+            <div className="flex flex-col gap-2 text-sm">
+              <span>That conversation seems intense. 🧘 Take a deep breath!</span>
+              <em className="text-xs text-gray-500">"You are doing your best. It’s okay."</em>
+            </div>
+          ),
+          { duration: 5000 }
+        );
+      }
+    } catch (err) {
+      console.error("Conversation analysis failed", err);
+    }
+  };
+
+  const sendPayment = async (amount, receiver) => {
+    try {
+      const res = await axios.post(`${API}/api/payments/send`, { amount, receiver });
+  
+      if (res.data.clientSecret) {
+        setPaymentClientSecret(res.data.clientSecret);
+        setShowPaymentModal(true);
+      }
+    } catch (err) {
+      console.error("Payment Error:", err.message);
+      toast.error("Payment failed. Try again.");
+    }
+  };
+
  
 
   useEffect(() => {
@@ -177,10 +255,18 @@ function Chat() {
 
   const sendMessage = () => {
     if (message.trim() !== "" && toUser.trim() !== "") {
-      const newMsg = { sender: username, receiver: toUser, content: message };
+      const newMsg = { sender: username, 
+        receiver: toUser, 
+        content: message,
+        createdAt: new Date().toISOString() };
       socket.emit("send_message", newMsg);
       setMessage("");
+
+      setTimeout(() => {
+        analyzeRecentConversation();
+      }, 1000);
     }
+    
   };
 
   const handleLogout = () => {
@@ -213,8 +299,15 @@ function Chat() {
       { duration: 10000 }
     );
   };
-
+  // if (!stripePromise) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen">
+  //       <p className="text-lg">Stripe initialization failed. Please check your keys.</p>
+  //     </div>
+  //   );
+  // }
   return (
+    <Elements stripe={stripePromise} options={stripeOptions}>
     <div className="flex h-screen dark:bg-gray-900 dark:text-white">
       {/* Sidebar */}
       <div className="w-64 bg-gray-100 dark:bg-gray-800 border-r overflow-y-auto p-4">
@@ -264,8 +357,15 @@ function Chat() {
 
         {/* Chat header */}
         {toUser && (
-          <div className="px-6 py-2 border-b text-sm text-gray-600 dark:text-gray-300">
-            Chatting with <span className="font-medium text-blue-600 dark:text-blue-400">{toUser}</span>
+          <div className="px-6 py-2 border-b text-sm text-gray-600 dark:text-gray-300 flex justify-between items-center">
+            <div>
+              Chatting with <span className="font-medium text-blue-600 dark:text-blue-400">{toUser}</span>
+            </div>
+            <button
+              onClick={() => setShowPaymentPrompt(true)}
+              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 rounded">
+              Send Money
+            </button>
           </div>
         )}
 
@@ -300,11 +400,17 @@ function Chat() {
                   <strong>{msg.sender === username ? "You" : msg.sender}</strong>
                 </div>
                 <div>{msg.content}</div>
+                <div className="flex items-center justify-end gap-2 text-xs text-gray-500 mt-1">
+                  <span>
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 {msg.sender === username && (
-                  <div className="text-xs text-gray-500 mt-1 text-right">
+                  <span>
                     {msg.status === "seen" ? "✓✓ Seen" : msg.status === "delivered" ? "✓✓" : "✓"}
-                  </div>
-                )}
+                  </span>
+                  )}
+                </div>
+                
                 {/* Hover Actions */}
                 <div className="absolute top-0 right-0 hidden group-hover:flex gap-2 bg-white dark:bg-gray-800 border p-1 rounded shadow text-xs">
                   <button>💬</button>
@@ -363,6 +469,25 @@ function Chat() {
         </div>
       </div>
     </div>
+    {showPaymentPrompt && (
+      <PaymentPromptModal
+        onSend={(amount) => {
+          setShowPaymentPrompt(false);
+          sendPayment(amount, toUser);
+        }}
+        onClose={() => setShowPaymentPrompt(false)}
+      />
+    )}
+    {showPaymentModal && (
+      <SendPaymentModal
+        clientSecret={paymentClientSecret}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPaymentClientSecret("");
+        }}
+      />
+    )}
+    </Elements>
   );
 }
 
