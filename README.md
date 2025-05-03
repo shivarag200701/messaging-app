@@ -1,132 +1,155 @@
-# 📱 Mini WhatsApp Clone – Fullstack Messaging App
+# 📱 Mini WhatsApp Clone – Real-Time Fullstack Messaging App
 
-A beginner-friendly project to build a real-time 1-on-1 chat application similar to WhatsApp using **React**, **Node.js**, **Socket.IO**, and **MongoDB**.
-
----
-
-## 📌 Project Overview
-
-This app allows users to:
-- Register and login securely
-- Send and receive messages in real-time
-- View chat history
-- See online/offline status (optional)
-- Build a mobile-responsive chat UI
+A feature-rich, real-time 1-on-1 chat app inspired by WhatsApp. Built with **React**, **Node.js**, **Express**, **MongoDB**, and **Socket.IO**, it supports messaging, smart replies, mental health nudges, and test-mode payments using **Stripe**.
 
 ---
 
-## 🗂 Tech Stack
+## 🚀 Features
+
+- 🔐 Secure Login & JWT Auth
+- 💬 Real-time 1-on-1 Messaging (Socket.IO)
+- 🗂 Chat History (MongoDB)
+- 🟢 Online Status & Typing Indicator
+- 🌘 Dark Mode Toggle
+- 🤖 Smart Reply Suggestions (OpenAI)
+- 🧘 Mental Health Detection Prompts
+- 💸 Stripe Payment Integration (Test Mode)
+
+---
+
+## 🛠 Tech Stack
 
 | Layer      | Tech                          |
 |------------|-------------------------------|
-| Frontend   | React.js                      |
+| Frontend   | React + Tailwind CSS          |
 | Backend    | Node.js + Express             |
-| Database   | MongoDB (via Mongoose)        |
-| Real-time  | WebSockets using Socket.IO    |
+| Real-Time  | WebSockets via Socket.IO      |
+| Database   | MongoDB + Mongoose            |
 | Auth       | JWT + bcrypt                  |
-| Deployment | Vercel (Frontend), Render/Railway (Backend) |
+| AI         | OpenAI API                    |
+| Payments   | Stripe (Test Mode)            |
+| Deploy     | Vercel (Frontend) + Render (Backend) |
 
 ---
 
-## ✅ Project Checklist
+## 📦 Local Setup
 
-### 🟢 Phase 0: Prerequisites  
-- [x] Learn HTML, CSS, and JavaScript basics  
-- [x] Learn Git & GitHub  
-- [x] Learn basic terminal commands  
-- [x] Understand what frontend/backend means  
-- [x] Choose tech stack (React, Node.js, MongoDB, Socket.IO)
+### 1. Clone Repo
 
----
+```bash
+git clone https://github.com/yourusername/whatsapp-clone.git
+cd whatsapp-clone
+```
 
-### 🔵 Phase 1: Project Setup  
-- [x] Install Node.js and npm  
-- [x] Install VS Code and Git  
-- [x] Initialize backend project (`npm init`)  
-- [x] Set up Express server  
-- [x] Connect to MongoDB using Mongoose  
-- [x] Test basic REST API (e.g., `/ping`)  
-- [x] Initialize frontend with `create-react-app`  
-- [x] Create folders: `/client`, `/server`
+### 2. Backend Setup
 
----
+```bash
+cd server
+npm install
+cp .env.example .env
+```
 
-### 🟡 Phase 2: User Authentication  
-- [x] Create User model in MongoDB  
-- [x] Create `POST /register` API  
-- [x] Create `POST /login` API  
-- [x] Hash passwords using bcrypt  
-- [x] Generate JWT on login  
-- [x] Middleware to verify JWT on protected routes  
-- [x] Create login and registration pages (React)  
-- [x] Save token in `localStorage`  
-- [x] Redirect to chat on successful login
+Fill in `.env`:
 
----
+```
+PORT=5000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+OPENAI_API_KEY=your_openai_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+```
 
-### 🟠 Phase 3: Real-Time Messaging  
-- [ ] Set up Socket.IO on server  
-- [ ] Create WebSocket client in React  
-- [ ] Handle `send_message` event  
-- [ ] Handle `receive_message` event  
-- [ ] Save messages to MongoDB  
-- [ ] Load messages into chat screen in real-time  
-- [ ] Style messages as chat bubbles (you vs. friend)
+Then run:
 
----
+```bash
+npm run dev
+```
 
-### 🟣 Phase 4: Message History & Chat List  
-- [ ] Create `GET /messages/:userId` API  
-- [ ] Load chat history on login  
-- [ ] Display messages in scrollable window  
-- [ ] Create a simple chat list UI  
-- [ ] Show last message in chat preview
+### 3. Frontend Setup
 
----
+```bash
+cd ../client
+npm install
+cp .env.example .env
+```
 
-### 🔴 Phase 5: Online Status (Optional)  
-- [ ] Track connected users with Socket.IO  
-- [ ] Broadcast `user_online` and `user_offline` events  
-- [ ] Display green dot for online users  
-- [ ] Implement "typing..." indicator (bonus)
+Fill in `.env`:
+
+```
+REACT_APP_BACKEND_URL=http://localhost:5000
+REACT_APP_STRIPE_PUBLIC_KEY=your_stripe_public_key
+```
+
+Then run:
+
+```bash
+npm start
+```
 
 ---
 
-### 🎁 Phase 6: Polish & Deploy  
-- [ ] Add loading and error states  
-- [ ] Style UI (basic responsive layout)  
-- [ ] Hide/show password toggle  
-- [ ] Deploy backend (Render / Railway)  
-- [ ] Deploy frontend (Vercel)  
-- [ ] Use `.env` files for secrets  
-- [ ] Test full app on production
+## 💳 Stripe Test Cards
+
+Use these during test payments:
+
+| Card Type     | Number             | Exp   | CVC |
+|---------------|--------------------|-------|-----|
+| ✅ Success     | 4242 4242 4242 4242 | 12/34 | 123 |
+| ❌ Declined    | 4000 0000 0000 0002 | 12/34 | 123 |
+
+> 📘 Full list: [Stripe Test Cards](https://stripe.com/docs/testing)
 
 ---
 
-### 🌟 Bonus Features (Stretch Goals)  
-- [ ] Group chat support  
-- [ ] Media (image) messaging  
-- [ ] Push notifications  
-- [ ] Dark mode toggle  
-- [ ] End-to-End encryption (advanced)  
-- [ ] Voice/video calling (WebRTC)
+## 📃 API Routes
+
+### Auth
+- `POST /api/register` – Create user
+- `POST /api/login` – Login + get token
+
+### Messages
+- `POST /api/messages` – Send message
+- `GET /api/messages/:from/:to` – Get conversation history
+
+### AI & Analysis
+- `POST /api/ai/suggest` – Get smart reply suggestions
+- `POST /api/mental-health/analyze` – Analyze tone of conversation
+
+### Payments
+- `POST /api/payments/send` – Create Stripe PaymentIntent
 
 ---
 
-## 📆 Estimated Timeline
+## 🧠 Architecture Notes
 
-| Phase               | Time Estimate |
-|--------------------|---------------|
-| Phase 0: Prep       | 1 week        |
-| Phase 1: Setup      | 1 week        |
-| Phase 2: Auth       | 1 week        |
-| Phase 3: Messaging  | 2–3 weeks     |
-| Phase 4: History    | 1 week        |
-| Phase 5: Status     | 1 week (opt)  |
-| Phase 6: Deploy     | 1 week        |
+- Messages stored in MongoDB with status (`sent`, `delivered`, `seen`)
+- WebSocket room-based user sessions
+- AI Smart Replies powered by OpenAI GPT
+- Stripe Elements modal integration
+- Environment variables used for API keys and secrets
 
 ---
 
-## 🚀 Let’s Build It!
+## 🌟 Roadmap (Coming Soon)
 
-Happy coding! 💻✨
+- [ ] Media (Images/Files) Sharing
+- [ ] Group Chats
+- [ ] Mobile App (React Native)
+- [ ] Push Notifications (Firebase)
+- [ ] End-to-End Encryption
+- [ ] Video/Voice Calling (WebRTC)
+
+---
+
+## 📚 License & Credits
+
+- MIT License  
+- Inspired by WhatsApp UI  
+- Built with 💙 by [Shiva Raghav](https://github.com/shivarag200701)
+
+---
+
+## 🙋‍♂️ Questions?
+
+If you liked the project, consider giving it a ⭐  
+Have suggestions or issues? Feel free to open one!
